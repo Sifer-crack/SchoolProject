@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: 'http://127.0.0.1:5500'
+  origin: 'http://127.0.0.1:8000'
 }));
 app.use(bodyParser.json());
 
@@ -48,6 +48,11 @@ app.post('/api/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
+    // Password strength validation
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
     // Check if email already exists
     const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
@@ -70,7 +75,7 @@ app.post('/api/signup', async (req, res) => {
     const verificationToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1d' });
 
     // Send verification email
-    const verificationLink = `http://yourdomain.com/verify/${verificationToken}`;
+    const verificationLink = `http://localhost:8000/${verificationToken}`;
     await transporter.sendMail({
       from: 'lbccc532@gmail.com',
       to: email,
@@ -85,8 +90,9 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
+
 // Login endpoint
-app.post('/api/login', async (req, res) => {
+app.get('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {

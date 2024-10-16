@@ -187,32 +187,39 @@ window.onclick = function (event) {
 };
 
 // Handle signup
-signupForm.addEventListener("submit", function (e) {
+signupForm.addEventListener("submit", async function (e) {
   e.preventDefault();
   console.log("Sign-up form submitted");
   const firstName = document.getElementById("firstName").value;
   const lastName = document.getElementById("lastName").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  const dateOfBirth = document.getElementById("dateOfBirth").value;
+  const schoolId = document.getElementById("schoolId").value;
 
-  console.log("Form data:", { firstName, lastName, email, password });
+  console.log("Form data:", { firstName, lastName, email, password, dateOfBirth, schoolId });
 
-  const user = {
-    id: Date.now().toString(),
-    firstName,
-    lastName,
-    email,
-    password, 
-  };
+  try {
+    const response = await fetch('/api/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ firstName, lastName, email, password, dateOfBirth, schoolId }),
+    });
 
-  console.log("User object created:", user);
+    const data = await response.json();
 
-  localStorage.setItem("user", JSON.stringify(user));
-  console.log("User saved to localStorage");
-
-  alert("Signup successful!");
-  closeModal(signupModal);
-  updateAuthUI(user);
+    if (response.ok) {
+      alert(data.message);
+      closeModal(signupModal);
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred during signup');
+  }
 });
 
 // Handle login
