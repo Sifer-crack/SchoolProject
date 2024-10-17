@@ -30,15 +30,13 @@
                 <li><a href="#futureEvents">Future Events</a></li>
                 <li class="nav_bar_separator"></li>
                 <li><a href="#learnChess">Learn Chess</a></li>
-                <li class="nav_bar_separator"></li>
-                <li><a href="#contactUs">Contact Us</a></li>
             </ul>
         </nav>
 
         <!-- Login/Signup Container -->
-        <div class="auth-container">
-            <button class="auth-btn">Log In</button>
-            <button class="auth-btn">Sign Up</button>
+        <div class="auth-container" id="auth-container">
+            <button class="auth-btn" id="auth-btn">Log In</button>
+            <button class="auth-btn" id="auth-btn">Sign Up</button>
         </div>
 
         <!-- Hamburger menu for mobile -->
@@ -234,18 +232,18 @@
               <form id="signupForm">
 
                 <label for="firstName">First Name</label>
-                <input type="text" id="firstName" name="firstName" required>
+                <input type="text" id="firstName" name="firstName"  required>
           
                 <label for="lastName">Last Name</label>
                 <input type="text" id="lastName" name="lastName" required>
           
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="signup-email" name="email" required>
           
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
           
-                <button type="submit" class="submit-btn">Sign Up</button>
+                <button type="submit" class="submit-btn" id="signup-submit-btn">Sign Up</button>
               </form>
             </div>
           </div>
@@ -262,7 +260,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="login-password" name="password" required>
 
-                <button type="submit" class="submit-btn">Log In</button>
+                <button type="submit" class="submit-btn" id="login-submit-btn">Log In</button>
               </form>
             </div>
           </div>
@@ -276,6 +274,13 @@
         <p>Long Bay College offers students a wide range of opportunities to enhance the high school experience.</p>
     </footer>
 
-    <script src="app.js"></script>
+    <script src="app.js">
+      window.onload = function() {
+        if (!window.location.hash) {
+          window.location = window.location + '#loaded';
+          window.location.reload();
+        }
+      }
+    </script>
 </body>
 </html>

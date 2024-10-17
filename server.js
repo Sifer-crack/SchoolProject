@@ -1,15 +1,17 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const db = require("./dao");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 
 // Middleware
 app.use(cors({
@@ -17,13 +19,6 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 
-// MySQL connection pool
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'root',
-  database: 'lbccc_clubmembers'
-});
 
 // JWT secret
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -38,10 +33,10 @@ const transporter = nodemailer.createTransport({
 });
 
 // Signup endpoint
-app.post('/api/signup', async (req, res) => {
+app.get('/api/signup', async (req, res) => {
   const { firstName, lastName, email, password, dateOfBirth, schoolId } = req.body;
 
-  try {
+try {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -54,7 +49,7 @@ app.post('/api/signup', async (req, res) => {
     }
 
     // Check if email already exists
-    const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
       return res.status(400).json({ error: 'Email already in use' });
     }
@@ -66,7 +61,7 @@ app.post('/api/signup', async (req, res) => {
     const userId = uuidv4();
 
     // Insert user into database
-    await pool.query(
+    await db.query(
       'INSERT INTO users (user_id, school_id, firstName, lastName, email, password, dateOfBirth) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [userId, schoolId, firstName, lastName, email, hashedPassword, dateOfBirth]
     );
@@ -97,7 +92,7 @@ app.get('/api/login', async (req, res) => {
 
   try {
     // Find user by email
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
@@ -114,7 +109,7 @@ app.get('/api/login', async (req, res) => {
     const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, { expiresIn: '1h' });
 
     // Update last login
-    await pool.query('UPDATE users SET lastLogin = CURRENT_TIMESTAMP WHERE user_id = ?', [user.user_id]);
+    await db.query('UPDATE users SET lastLogin = CURRENT_TIMESTAMP WHERE user_id = ?', [user.user_id]);
 
     res.json({ token, user: { id: user.user_id, firstName: user.firstName, lastName: user.lastName, email: user.email } });
   } catch (error) {
@@ -125,7 +120,7 @@ app.get('/api/login', async (req, res) => {
 
 app.get('/api/users', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT user_id, firstName, lastName, email, password FROM users LIMIT 5');
+    const [rows] = await db.query('SELECT user_id, firstName, lastName, email FROM users');
     res.json(rows);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -139,7 +134,7 @@ app.get('/api/verify/:token', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    await pool.query('UPDATE users SET email_verified = TRUE WHERE user_id = ?', [decoded.userId]);
+    await db.query('UPDATE users SET email_verified = TRUE WHERE user_id = ?', [decoded.userId]);
     res.json({ message: 'Email verified successfully' });
   } catch (error) {
     console.error(error);
@@ -147,9 +142,5 @@ app.get('/api/verify/:token', async (req, res) => {
   }
 });
 
-// Existing contact form submission endpoint
-app.post('/api/submit', async (req, res) => {
-  // ... (your existing code for form submission)
-});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
